@@ -1,23 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function ProfileUpdatePage({ onCancel }) {
   const [fullName, setFullName] = useState('');
   const [profilePhotoURL, setProfilePhotoURL] = useState('');
-  const API_KEY = "my_id"; // Replace with your Firebase API Key
+  const [profileData, setProfileData] = useState(null);
+  const firebaseDatabaseURL = 'https://expense-tracker-d154c-default-rtdb.firebaseio.com/users'; // Replace with your Firebase Database URL
+
+
+  const fetchProfileData = async () => {
+    try {
+      const response = await fetch(`${firebaseDatabaseURL}.json`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile data');
+      }
+      const data = await response.json();
+      setProfileData(data);
+    } catch (error) {
+      console.error('Error fetching profile data:', error.message);
+
+    }
+  };
+
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  useEffect(() => {
+    if (profileData && profileData.fullName && profileData.profilePhotoURL) {
+      setFullName(profileData.fullName);
+      setProfilePhotoURL(profileData.profilePhotoURL);
+    }
+  }, [profileData]);
 
   const handleUpdate = async () => {
-    const idToken = 'my_token'
-
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${firebaseDatabaseURL}.json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          idToken: idToken,
-          displayName: fullName,
-          photoUrl: profilePhotoURL,
+          fullName: fullName,
+          profilePhotoURL: profilePhotoURL,
+          profileCompletion: '100%', 
         }),
       });
 
@@ -26,14 +52,18 @@ function ProfileUpdatePage({ onCancel }) {
       }
 
       console.log('Profile updated successfully');
-
+      setProfileData({ fullName, profilePhotoURL, profileCompletion: '100%' });
     } catch (error) {
       console.error('Error updating profile:', error.message);
-    
+      // Handle error updating profile
     }
     setFullName('')
     setProfilePhotoURL('')
   };
+
+
+  const profileCompletion =
+    fullName && profilePhotoURL ? '100%' : '65%';
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -69,6 +99,9 @@ function ProfileUpdatePage({ onCancel }) {
         >
           Cancel
         </button>
+        <p className="text-center mt-4">
+          Your profile is {profileCompletion} completed.
+        </p>
       </div>
     </div>
   );
