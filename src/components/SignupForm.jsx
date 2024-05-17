@@ -11,8 +11,14 @@ function SignupForm() {
   const [isProfileComplete, setIsProfileComplete] = useState(false);
   const [showProfileUpdate, setShowProfileUpdate] = useState(false);
 
-  const ID = 'my-id';
-   
+
+   // const ID = 'my-id';
+   const ID = 'AIzaSyCSdVu37gW4_F5rPobNhiyNQESemMPi568'; 
+  
+  const handleProfileCompletion = (status) => {
+    setIsProfileComplete(status);
+  };
+ 
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -152,7 +158,7 @@ function SignupForm() {
       </form>
       {isLogin ? (
         <p className="mt-4 text-center pt-2 text-blue-400">
-          <a className="underline" href="">Forgot password</a>
+          <a href="">Forgot password</a>
         </p>
       ) : ''}
       <p className="mt-4 text-center border-t-2 pt-4">
