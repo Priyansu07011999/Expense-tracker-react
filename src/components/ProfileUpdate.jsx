@@ -3,16 +3,41 @@ import React, { useState } from 'react';
 function ProfileUpdatePage({ onCancel }) {
   const [fullName, setFullName] = useState('');
   const [profilePhotoURL, setProfilePhotoURL] = useState('');
+  const API_KEY = "my_id"; // Replace with your Firebase API Key
 
-  const handleUpdate = () => {
-    console.log('Profile updated:', { fullName, profilePhotoURL });
+  const handleUpdate = async () => {
+    const idToken = 'my_token'
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken: idToken,
+          displayName: fullName,
+          photoUrl: profilePhotoURL,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      console.log('Profile updated successfully');
+
+    } catch (error) {
+      console.error('Error updating profile:', error.message);
+    
+    }
+    setFullName('')
+    setProfilePhotoURL('')
   };
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-3xl mb-4 text-center">Contact Details</h1>
-      <p className="mb-4 text-center text-gray-500">Winners never quit, Quitters never win.</p>
-      <p className='mb-4 text-center text-black-500'>Your Profile is 64% Complete.A complete profile has higher chance to get a job. <button className='text-blue-400'>Complete Now</button></p>
       <div className="space-y-4">
         <div>
           <label className="block text-gray-700">Full Name:</label>
