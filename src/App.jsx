@@ -1,9 +1,9 @@
-// App.js
 import React, { useState, useEffect } from 'react';
 import SignupForm from './components/SignupForm';
 import ProfileUpdatePage from './components/ProfileUpdate';
 import Header from './components/header/Header';
 import ForgotPasswordForm from './components/ForgetPassword';
+import ExpenseForm from './components/ExpenseForm';
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 
 function App() {
@@ -15,7 +15,6 @@ function App() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in on component mount
     const token = localStorage.getItem('idToken');
     if (token) {
       setIsLoggedIn(true);
@@ -33,7 +32,6 @@ function App() {
   };
 
   const handleLogout = () => {
-    // Clear idToken from local storage and reset state
     localStorage.removeItem('idToken');
     setIsLoggedIn(false);
     setIdToken('');
@@ -137,6 +135,7 @@ function App() {
                     onProfileCompletion={handleProfileCompletion}
                   />
                 ) : null}
+                <ExpenseForm />
               </div>
             ) : (
               <Redirect to="/login" />
