@@ -1,7 +1,9 @@
+// App.js
 import React, { useState, useEffect } from 'react';
 import SignupForm from './components/SignupForm';
 import ProfileUpdatePage from './components/ProfileUpdate';
 import Header from './components/header/Header';
+import ForgotPasswordForm from './components/ForgetPassword';
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 
 function App() {
@@ -11,7 +13,6 @@ function App() {
   const [idToken, setIdToken] = useState('');
   const [profileData, setProfileData] = useState(null);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const ID = 'my_id';
 
   useEffect(() => {
     // Check if user is logged in on component mount
@@ -97,6 +98,9 @@ function App() {
         <Switch>
           <Route path="/login">
             {isLoggedIn ? <Redirect to="/" /> : <SignupForm onLoginSuccess={handleLoginSuccess} onProfileCompletion={handleProfileCompletion} />}
+          </Route>
+          <Route path="/forgot-password">
+            <ForgotPasswordForm />
           </Route>
           <Route path="/">
             {isLoggedIn ? (
