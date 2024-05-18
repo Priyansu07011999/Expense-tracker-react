@@ -7,7 +7,7 @@ function SignupForm({ onLoginSuccess}) {
   const [error, setError] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
 
-  const ID = 'AIzaSyCSdVu37gW4_F5rPobNhiyNQESemMPi568';
+  const ID = 'my_id';
 
   const handleSignup = async (e) => {
     e.preventDefault();
