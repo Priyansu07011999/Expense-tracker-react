@@ -1,24 +1,13 @@
 import React, { useState } from 'react';
-import ProfileUpdatePage from './ProfileUpdate';
 
-function SignupForm() {
+function SignupForm({ onLoginSuccess}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cPassword, setCPassword] = useState('');
   const [error, setError] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-  const [showProfileUpdate, setShowProfileUpdate] = useState(false);
 
-
-   // const ID = 'my-id';
-   const ID = 'AIzaSyCSdVu37gW4_F5rPobNhiyNQESemMPi568'; 
-  
-  const handleProfileCompletion = (status) => {
-    setIsProfileComplete(status);
-  };
- 
+  const ID = 'my-id'
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -45,7 +34,9 @@ function SignupForm() {
         throw new Error(data.error.message);
       }
 
+      const data = await response.json();
       console.log('User has successfully signed up');
+      onLoginSuccess(data.idToken);
     } catch (error) {
       setError(error.message);
     }
@@ -72,43 +63,13 @@ function SignupForm() {
         throw new Error(data.error.message);
       }
 
+      const data = await response.json();
       console.log('User has successfully logged in');
-      setIsLoggedIn(true); // Set logged in state to true
+      onLoginSuccess(data.idToken); // Call the callback with the idToken
     } catch (error) {
       setError(error.message);
     }
   };
-
-  const handleCompleteProfile = () => {
-    setShowProfileUpdate(true);
-  };
-
-  const handleCancelProfileUpdate = () => {
-    setShowProfileUpdate(false);
-  };
-
-  if (showProfileUpdate) {
-    return <ProfileUpdatePage onCancel={handleCancelProfileUpdate} />;
-  }
-
-  if (isLoggedIn) {
-    return (
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-3xl mb-4 text-center">Welcome to Expense Tracker!!!</h1>
-        {!isProfileComplete && (
-          <div className="text-center">
-            <p className="text-red-500">Your profile is incomplete.</p>
-            <button
-              className="text-blue-500 underline"
-              onClick={handleCompleteProfile}
-            >
-              Complete now
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -158,7 +119,7 @@ function SignupForm() {
       </form>
       {isLogin ? (
         <p className="mt-4 text-center pt-2 text-blue-400">
-          <a href="">Forgot password</a>
+          <a className="underline" href="">Forgot password</a>
         </p>
       ) : ''}
       <p className="mt-4 text-center border-t-2 pt-4">
