@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-function ProfileUpdatePage({ onCancel }) {
+function ProfileUpdatePage({ onCancel, idToken, onProfileCompletion }) {
   const [fullName, setFullName] = useState('');
   const [profilePhotoURL, setProfilePhotoURL] = useState('');
   const [profileData, setProfileData] = useState(null);
-  const firebaseDatabaseURL = 'https://expense-tracker-d154c-default-rtdb.firebaseio.com/users'; // Replace with your Firebase Database URL
-
+  const firebaseDatabaseURL = 'https://expense-tracker-d154c-default-rtdb.firebaseio.com/users';
 
   const fetchProfileData = async () => {
     try {
-      const response = await fetch(`${firebaseDatabaseURL}.json`);
+      const response = await fetch(`${firebaseDatabaseURL}.json?auth=${idToken}`);
       if (!response.ok) {
         throw new Error('Failed to fetch profile data');
       }
@@ -17,33 +16,34 @@ function ProfileUpdatePage({ onCancel }) {
       setProfileData(data);
     } catch (error) {
       console.error('Error fetching profile data:', error.message);
-
     }
   };
 
+  useEffect(() => {
+    if (idToken) {
+      fetchProfileData();
+    }
+  }, [idToken]);
 
   useEffect(() => {
-    fetchProfileData();
-  }, []);
-
-  useEffect(() => {
-    if (profileData && profileData.fullName && profileData.profilePhotoURL) {
-      setFullName(profileData.fullName);
-      setProfilePhotoURL(profileData.profilePhotoURL);
+    if (profileData) {
+      if (profileData.fullName) setFullName(profileData.fullName);
+      if (profileData.profilePhotoURL) setProfilePhotoURL(profileData.profilePhotoURL);
     }
   }, [profileData]);
 
   const handleUpdate = async () => {
     try {
-      const response = await fetch(`${firebaseDatabaseURL}.json`, {
-        method: 'POST',
+      const profileCompletion = fullName && profilePhotoURL ? '100%' : '65%';
+      const response = await fetch(`${firebaseDatabaseURL}.json?auth=${idToken}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fullName: fullName,
-          profilePhotoURL: profilePhotoURL,
-          profileCompletion: '100%', 
+          fullName,
+          profilePhotoURL,
+          profileCompletion,
         }),
       });
 
@@ -52,18 +52,14 @@ function ProfileUpdatePage({ onCancel }) {
       }
 
       console.log('Profile updated successfully');
-      setProfileData({ fullName, profilePhotoURL, profileCompletion: '100%' });
+      setProfileData({ fullName, profilePhotoURL, profileCompletion });
+      onProfileCompletion(profileCompletion === '100%'); 
     } catch (error) {
       console.error('Error updating profile:', error.message);
-      // Handle error updating profile
     }
-    setFullName('')
-    setProfilePhotoURL('')
   };
 
-
-  const profileCompletion =
-    fullName && profilePhotoURL ? '100%' : '65%';
+  const profileCompletion = fullName && profilePhotoURL ? '100%' : '65%';
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
