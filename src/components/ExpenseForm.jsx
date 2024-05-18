@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function ExpenseForm() {
   const [expenses, setExpenses] = useState([]);
@@ -6,17 +6,64 @@ function ExpenseForm() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
 
-  const handleAddExpense = (e) => {
+  useEffect(() => {
+    async function fetchExpenses() {
+      try {
+        const response = await fetch('https://expense-tracker-d154c-default-rtdb.firebaseio.com/expenses.json');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch expenses.');
+        }
+
+        const data = await response.json();
+        if (data) {
+          const expensesArray = Object.keys(data).map((key) => ({
+            id: key,
+            ...data[key],
+          }));
+          setExpenses(expensesArray);
+        }
+      } catch (error) {
+        console.error('Error fetching expenses:', error.message);
+      }
+    }
+
+    fetchExpenses();
+  }, []);
+
+  const handleAddExpense = async (e) => {
     e.preventDefault();
     const newExpense = {
       amount,
       description,
       category,
     };
-    setExpenses([...expenses, newExpense]);
-    setAmount('');
-    setDescription('');
-    setCategory('');
+
+    try {
+      const response = await fetch('https://expense-tracker-d154c-default-rtdb.firebaseio.com/expenses.json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newExpense),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add expense.');
+      }
+
+      
+      setAmount('');
+      setDescription('');
+      setCategory('');
+
+      // Fetch updated expenses list and update state
+      const data = await response.json();
+      const newExpenseWithKey = { ...newExpense, id: data.name }; // Adding Firebase-generated ID
+      setExpenses([...expenses, newExpenseWithKey]);
+    } catch (error) {
+      console.error('Error adding expense:', error.message);
+    }
   };
 
   return (
@@ -68,8 +115,8 @@ function ExpenseForm() {
         <h3 className="text-xl mb-4 text-center">Expenses</h3>
         {expenses.length > 0 ? (
           <ul className="space-y-4">
-            {expenses.map((expense, index) => (
-              <li key={index} className="border-b pb-2">
+            {expenses.map((expense) => (
+              <li key={expense.id} className="border-b pb-2">
                 <p>Amount: ₹{expense.amount}</p>
                 <p>Description: {expense.description}</p>
                 <p>Category: {expense.category}</p>
