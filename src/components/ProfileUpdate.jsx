@@ -7,7 +7,7 @@ function ProfileUpdatePage({ onCancel, idToken, onProfileCompletion }) {
   const [profileData, setProfileData] = useState(null);
   const firebaseDatabaseURL = 'https://expense-tracker-d154c-default-rtdb.firebaseio.com/users';
 
-  const API_KEY = 'my_api_key';
+  const API_KEY = 'my_id';
 
   useEffect(() => {
     fetchProfileData();
