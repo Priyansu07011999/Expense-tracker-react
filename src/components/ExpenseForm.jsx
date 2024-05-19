@@ -5,6 +5,7 @@ function ExpenseForm() {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
+  const [editingExpense, setEditingExpense] = useState(null);
 
   useEffect(() => {
     async function fetchExpenses() {
@@ -52,12 +53,11 @@ function ExpenseForm() {
         throw new Error('Failed to add expense.');
       }
 
-      
+
       setAmount('');
       setDescription('');
       setCategory('');
 
-      // Fetch updated expenses list and update state
       const data = await response.json();
       const newExpenseWithKey = { ...newExpense, id: data.name }; // Adding Firebase-generated ID
       setExpenses([...expenses, newExpenseWithKey]);
@@ -66,10 +66,64 @@ function ExpenseForm() {
     }
   };
 
+  const handleDeleteExpense = async (id) => {
+    try {
+      const response = await fetch(`https://expense-tracker-d154c-default-rtdb.firebaseio.com/expenses/${id}.json`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete expense.');
+      }
+
+      setExpenses(expenses.filter(expense => expense.id !== id));
+    } catch (error) {
+      console.error('Error deleting expense:', error.message);
+    }
+  };
+
+  const handleEditExpense = (expense) => {
+    setAmount(expense.amount);
+    setDescription(expense.description);
+    setCategory(expense.category);
+    setEditingExpense(expense.id);
+  };
+
+  const handleUpdateExpense = async (e) => {
+    e.preventDefault();
+    const updatedExpense = {
+      amount,
+      description,
+      category,
+    };
+
+    try {
+      const response = await fetch(`https://expense-tracker-d154c-default-rtdb.firebaseio.com/expenses/${editingExpense}.json`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedExpense),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update expense.');
+      }
+
+      setExpenses(expenses.map(expense => expense.id === editingExpense ? { ...updatedExpense, id: editingExpense } : expense));
+      setAmount('');
+      setDescription('');
+      setCategory('');
+      setEditingExpense(null);
+    } catch (error) {
+      console.error('Error updating expense:', error.message);
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl mb-4 text-center">Add Expense</h2>
-      <form className="space-y-4" onSubmit={handleAddExpense}>
+      <h2 className="text-2xl mb-4 text-center">{editingExpense ? 'Edit Expense' : 'Add Expense'}</h2>
+      <form className="space-y-4" onSubmit={editingExpense ? handleUpdateExpense : handleAddExpense}>
         <div>
           <input
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
@@ -108,7 +162,7 @@ function ExpenseForm() {
           className="w-full px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
           type="submit"
         >
-          Add Expense
+          {editingExpense ? 'Update Expense' : 'Add Expense'}
         </button>
       </form>
       <div className="mt-6">
@@ -120,6 +174,20 @@ function ExpenseForm() {
                 <p>Amount: ₹{expense.amount}</p>
                 <p>Description: {expense.description}</p>
                 <p>Category: {expense.category}</p>
+                <div className="flex space-x-2">
+                  <button
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-yellow-600 focus:outline-none"
+                    onClick={() => handleEditExpense(expense)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-600 focus:outline-none"
+                    onClick={() => handleDeleteExpense(expense.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
