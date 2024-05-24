@@ -1,92 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 import SignupForm from './components/SignupForm';
 import ProfileUpdatePage from './components/ProfileUpdate';
 import Header from './components/header/Header';
 import ForgotPasswordForm from './components/ForgetPassword';
 import ExpenseForm from './components/ExpenseForm';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { auth } from './firebase'; // Import the auth instance from firebase.js
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-  const [showProfileUpdate, setShowProfileUpdate] = useState(false);
-  const [idToken, setIdToken] = useState('');
-  const [profileData, setProfileData] = useState(null);
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const dispatch = useDispatch();
+  const isLoggedIn = useSelector(state => state.auth.isLoggedIn);
+  const idToken = useSelector(state => state.auth.idToken);
+  const expenses = useSelector(state => state.expenses.expenses);
 
   useEffect(() => {
-    const token = localStorage.getItem('idToken');
-    if (token) {
-      setIsLoggedIn(true);
-      setIdToken(token);
-      fetchProfileData(token);
-    }
-  }, []);
+    // Add Firebase Authentication listener to check user authentication state
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        // User is signed in.
+        dispatch({
+          type: 'LOGIN',
+          payload: { idToken: user.getIdToken(), userId: user.uid }
+        });
+      } else {
+        // User is signed out.
+        dispatch({ type: 'LOGOUT' });
+      }
+    });
 
-  const handleLoginSuccess = (token) => {
+    // Clean up the listener when the component unmounts
+    return unsubscribe;
+  }, [dispatch]);
+
+  const handleLoginSuccess = (token, userId) => {
     localStorage.setItem('idToken', token);
-    setIdToken(token);
-    setIsLoggedIn(true);
-    setIsEmailVerified(false);
-    fetchProfileData(token);
+    dispatch({
+      type: 'LOGIN',
+      payload: { idToken: token, userId: userId },
+    });
   };
 
   const handleLogout = () => {
     localStorage.removeItem('idToken');
-    setIsLoggedIn(false);
-    setIdToken('');
-    setProfileData(null);
-    setIsEmailVerified(false);
-  };
-
-  const handleProfileCompletion = (status) => {
-    setIsProfileComplete(status);
-  };
-
-  const handleCompleteProfile = () => {
-    setShowProfileUpdate(true);
-  };
-
-  const handleCancelProfileUpdate = () => {
-    setShowProfileUpdate(false);
-  };
-
-  const fetchProfileData = async (token) => {
-    try {
-      const response = await fetch(`https://expense-tracker-d154c-default-rtdb.firebaseio.com/users.json?auth=${token}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile data');
-      }
-      const data = await response.json();
-      setProfileData(data);
-      setIsProfileComplete(!!(data?.fullName && data?.profilePhotoURL));
-    } catch (error) {
-      console.error('Error fetching profile data:', error.message);
-    }
-  };
-
-  const handleVerifyEmail = async () => {
-    try {
-      const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${ID}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          requestType: 'VERIFY_EMAIL',
-          idToken: idToken,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send verification email');
-      }
-
-      console.log('Verification email sent successfully');
-      setIsEmailVerified(true);
-    } catch (error) {
-      console.error('Error sending verification email:', error.message);
-    }
+    dispatch({ type: 'LOGOUT' });
   };
 
   return (
@@ -95,7 +52,7 @@ function App() {
         <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} />
         <Switch>
           <Route path="/login">
-            {isLoggedIn ? <Redirect to="/" /> : <SignupForm onLoginSuccess={handleLoginSuccess} onProfileCompletion={handleProfileCompletion} />}
+            {isLoggedIn ? <Redirect to="/" /> : <SignupForm onLoginSuccess={handleLoginSuccess} />}
           </Route>
           <Route path="/forgot-password">
             <ForgotPasswordForm />
@@ -105,36 +62,12 @@ function App() {
               <div>
                 <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
                   <h1 className="text-3xl mb-4 text-center">Welcome to Expense Tracker!!!</h1>
-                  {!isProfileComplete ? (
-                    <div className="text-center">
-                      <p className="text-red-500">Your profile is incomplete.</p>
-                      <button className="text-blue-500 underline" onClick={handleCompleteProfile}>
-                        Complete now
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      {isEmailVerified ? (
-                        <p className="text-green-500">Verification Link sent. Check your email</p>
-                      ) : (
-                        <button
-                          className="w-full px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-                          onClick={handleVerifyEmail}
-                        >
-                          Verify Email
-                        </button>
-                      )}
-                      {profileData?.fullName && profileData?.profilePhotoURL && <p className="text-green-500">Your profile is 100% complete.</p>}
-                    </div>
+                  {expenses.length > 0 && expenses.reduce((acc, expense) => acc + parseFloat(expense.amount), 0) > 1000 && (
+                    <button className="w-full px-4 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 focus:outline-none focus:bg-yellow-600">
+                      Activate Premium
+                    </button>
                   )}
                 </div>
-                {showProfileUpdate ? (
-                  <ProfileUpdatePage
-                    onCancel={handleCancelProfileUpdate}
-                    idToken={idToken}
-                    onProfileCompletion={handleProfileCompletion}
-                  />
-                ) : null}
                 <ExpenseForm />
               </div>
             ) : (
