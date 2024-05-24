@@ -1,36 +1,51 @@
-import React from 'react'
-import {NavLink, useHistory} from 'react-router-dom'
+// components/Header.js
+import React from 'react';
+import { connect } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+import { logout } from '../actions/authActions';
+import { NavLink } from 'react-router-dom';
 
+function Header({ isLoggedIn, logout, totalAmount }) {
+  const history = useHistory();
 
-function Header({isLoggedIn,onLogout}) {
-    const history = useHistory();
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem('idToken');
+    history.push('/login');
+  };
 
-    const handleLogout = () => {
-      // Clear idToken from local storage
-      localStorage.removeItem('idToken');
-      onLogout()
-      // Redirect to login page
-      history.push('/login');
-      
-    };
-    
-
-    return (
-        <header className="flex items-center justify-between px-4 py-3  text-black">
-          <div className="flex items-center">
-            {/* <img src={logo} alt="Logo" className="h-12 mr-1" /> */}
-            <NavLink to="/" className="text-lg text-blue-500 font-semibold">MyWebLink</NavLink>
-          </div>
-          <nav className="flex">
-            <NavLink to="/" className="mx-2">Home</NavLink>
-            <NavLink to="/products" className="mx-2">Products</NavLink>
-            <NavLink to="/about" className="mx-2">About us</NavLink>
-            {isLoggedIn && <button onClick={handleLogout} className="text-blue-200 hover:text-cyan-500">
-              Logout
-            </button>}
-          </nav>
-        </header>
-      );
+  return (
+    <header className="flex items-center justify-between px-4 py-3 text-black">
+      <div className="flex items-center">
+        <NavLink to="/" className="text-lg text-blue-500 font-semibold">ExpenseTracker</NavLink>
+      </div>
+      <nav className="flex">
+        <NavLink to="/" className="mx-2">Home</NavLink>
+        <NavLink to="/profile" className="mx-2">Profile</NavLink>
+        {isLoggedIn ? (
+          <button onClick={handleLogout} className="text-blue-200 hover:text-cyan-500">Logout</button>
+        ) : (
+          <NavLink to="/login" className="mx-2">Login</NavLink>
+        )}
+      </nav>
+      {totalAmount > 10000 && (
+        <NavLink to="/premium">
+          <button className="bg-yellow-500 px-4 py-2 rounded-md hover:bg-yellow-600 focus:outline-none">
+            Buy Premium
+          </button>
+        </NavLink>
+      )}
+    </header>
+  );
 }
 
-export default Header
+const mapStateToProps = (state) => ({
+  isLoggedIn: state.auth.isLoggedIn,
+  totalAmount: state.expenses.totalAmount,
+});
+
+const mapDispatchToProps = (dispatch) => ({
+  logout: () => dispatch(logout()),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Header);
