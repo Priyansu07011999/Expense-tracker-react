@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom'; 
 import ForgotPasswordForm from './ForgetPassword'; 
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase'; 
 
 function SignupForm({ onLoginSuccess, onForgotPassword }) {
   const [email, setEmail] = useState('');
@@ -10,8 +12,6 @@ function SignupForm({ onLoginSuccess, onForgotPassword }) {
   const [isLogin, setIsLogin] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false); 
 
-  const API_KEY = 'my_id'; 
-
   const handleSignup = async (e) => {
     e.preventDefault();
     if (password !== cPassword) {
@@ -20,26 +20,9 @@ function SignupForm({ onLoginSuccess, onForgotPassword }) {
     }
 
     try {
-      const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          returnSecureToken: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error.message);
-      }
-
-      const data = await response.json();
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log('User has successfully signed up');
-      onLoginSuccess(data.idToken);
+      onLoginSuccess(userCredential.user.uid);
     } catch (error) {
       setError(error.message);
     }
@@ -49,26 +32,9 @@ function SignupForm({ onLoginSuccess, onForgotPassword }) {
     e.preventDefault();
 
     try {
-      const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          returnSecureToken: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error.message);
-      }
-
-      const data = await response.json();
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('User has successfully logged in');
-      onLoginSuccess(data.idToken); // Call the callback with the idToken
+      onLoginSuccess(userCredential.user.uid);
     } catch (error) {
       setError(error.message);
     }
@@ -92,14 +58,14 @@ function SignupForm({ onLoginSuccess, onForgotPassword }) {
         throw new Error(data.error.message);
       }
 
-      console.log('Password reset email sent. Please check your inbox.');
-    } catch (error) {
+      console.log('Password reset email sent. Please check your inbox.')
+    }catch (error) {
       setError(error.message);
     }
   };
 
   const handleForgotPasswordClick = () => {
-    setShowForgotPassword(true); // Display ForgotPasswordForm when clicked
+    setShowForgotPassword(true); 
   };
 
   return (
@@ -110,7 +76,7 @@ function SignupForm({ onLoginSuccess, onForgotPassword }) {
         <ForgotPasswordForm
           onCancel={() => setShowForgotPassword(false)}
           onResetPassword={handleForgotPassword}
-        /> // Display ForgotPasswordForm if showForgotPassword is true
+        /> 
       ) : (
         <form className="space-y-4" onSubmit={isLogin ? handleLogin : handleSignup}>
           <div>
