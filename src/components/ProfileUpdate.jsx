@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 function ProfileUpdatePage({ onCancel, idToken, onProfileCompletion }) {
   const [fullName, setFullName] = useState('');
@@ -6,16 +9,36 @@ function ProfileUpdatePage({ onCancel, idToken, onProfileCompletion }) {
   const [verificationSent, setVerificationSent] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const firebaseDatabaseURL = 'https://expense-tracker-d154c-default-rtdb.firebaseio.com/users';
+  const [userId, setUserId] = useState(null); // State to hold the user ID
 
-  const API_KEY = 'my_id';
+  const firebaseConfig = {
+     // MY FIREBASE CONFIG. KINDLY ADD YOURS 
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  // Initialize Firebase Authentication
+  const auth = getAuth();
 
   useEffect(() => {
     fetchProfileData();
+    // Listen for authentication state changes
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, get the user ID
+        setUserId(user.uid);
+      } else {
+        // No user is signed in.
+        setUserId(null);
+      }
+    });
   }, []);
 
   const fetchProfileData = async () => {
     try {
-      const response = await fetch(`https://your-database-url/users/${idToken}.json`);
+      const response = await fetch(`${firebaseDatabaseURL}/${userId}.json`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch profile data');
@@ -55,11 +78,9 @@ function ProfileUpdatePage({ onCancel, idToken, onProfileCompletion }) {
       console.error('Error updating profile:', error.message);
     }
   };
-  
 
   const handleSendVerificationEmail = async () => {
     try {
-
       const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${API_KEY}`, {
         method: 'POST',
         headers: {
@@ -74,7 +95,6 @@ function ProfileUpdatePage({ onCancel, idToken, onProfileCompletion }) {
       if (!response.ok) {
         throw new Error('Failed to send verification email');
       }
-
 
       setVerificationSent(true);
     } catch (error) {
