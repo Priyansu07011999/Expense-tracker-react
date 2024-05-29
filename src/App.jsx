@@ -6,7 +6,7 @@ import ProfileUpdatePage from './components/ProfileUpdate';
 import Header from './components/header/Header';
 import ForgotPasswordForm from './components/ForgetPassword';
 import ExpenseForm from './components/ExpenseForm';
-import { auth } from './firebase'; // Import the auth instance from firebase.js
+import { auth } from './firebase'; 
 
 function App() {
   const dispatch = useDispatch();
@@ -15,21 +15,17 @@ function App() {
   const expenses = useSelector(state => state.expenses.expenses);
 
   useEffect(() => {
-    // Add Firebase Authentication listener to check user authentication state
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
-        // User is signed in.
         dispatch({
           type: 'LOGIN',
           payload: { idToken: user.getIdToken(), userId: user.uid }
         });
       } else {
-        // User is signed out.
         dispatch({ type: 'LOGOUT' });
       }
     });
 
-    // Clean up the listener when the component unmounts
     return unsubscribe;
   }, [dispatch]);
 
